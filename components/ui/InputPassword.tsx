@@ -1,4 +1,4 @@
-import { Input } from "@/constants/theme";
+import { Colors, Input } from "@/constants/theme";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import { useState } from "react";
@@ -10,7 +10,7 @@ import {
   View,
 } from "react-native";
 
-type InputFieldProps = {
+type Props = {
   label: string;
   placeholder: string;
   icon: keyof typeof MaterialIcons.glyphMap;
@@ -28,19 +28,17 @@ export function InputPassword({
   onChangeText,
   secure = false,
   keyboardType = "default",
-}: InputFieldProps) {
+}: Props) {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
     <View>
       <Text className={Input.labelStyle}>{label}</Text>
-
       <View className={Input.inputContainer}>
-        <MaterialIcons name={icon} size={22} color="#6B7280" />
-
+        <MaterialIcons name={icon} size={20} color={Colors.icon} />
         <TextInput
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={Colors.placeholder}
           value={value}
           onChangeText={onChangeText}
           secureTextEntry={secure && !showPassword}
@@ -48,14 +46,16 @@ export function InputPassword({
           autoCapitalize="none"
           autoCorrect={false}
           className={Input.inputStyle}
+          style={{
+            textAlignVertical: "center",
+          }}
         />
-
         {secure && (
           <Pressable onPress={() => setShowPassword(!showPassword)}>
             <Ionicons
               name={showPassword ? "eye" : "eye-off"}
-              size={22}
-              color="#6B7280"
+              size={20}
+              color={Colors.icon}
             />
           </Pressable>
         )}

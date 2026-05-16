@@ -1,52 +1,34 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import { Platform } from "react-native";
 
-const tintColorLight = "#0a7ea4";
-const tintColorDark = "#fff";
-
 export const Colors = {
-  light: {
-    text: "#11181C",
-    background: "#fff",
-    tint: tintColorLight,
-    icon: "#687076",
-    tabIconDefault: "#687076",
-    tabIconSelected: tintColorLight,
-  },
-  dark: {
-    text: "#ECEDEE",
-    background: "#151718",
-    tint: tintColorDark,
-    icon: "#9BA1A6",
-    tabIconDefault: "#9BA1A6",
-    tabIconSelected: tintColorDark,
-  },
+  primary: "#E11D48", // rose-600
+  background: "#0F172A", // slate-900
+  card: "#1E293B", // slate-800
+  border: "#334155", // slate-700
+  inputBg: "#0F172A", // slate-900
+  placeholder: "#64748B", // slate-500
+  label: "#94A3B8", // slate-400
+  text: "#F1F5F9", // slate-100
+  subtext: "#64748B", // slate-500
+  icon: "#64748B",
 };
 
 export const Input = {
   inputContainer:
-    "flex-row items-center rounded-2xl border border-gray-300 bg-gray-100 px-4",
-  inputStyle: "flex-1 py-4 pl-3 text-base text-black",
-  labelStyle: "mb-2 text-gray-600",
+    "flex-row items-center gap-3 rounded-2xl border border-slate-700 bg-slate-900 px-4 h-14",
+  inputStyle: "flex-1 text-white ",
+  labelStyle: "mb-2 text-sm font-medium text-white",
 };
 
 export const OtherLogin = {
-  socialButton: "rounded-full bg-gray-100 p-3",
+  socialButton: "rounded-2xl border border-slate-700 bg-slate-900 p-3",
 };
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: "ui-monospace",
   },
   default: {

@@ -1,40 +1,34 @@
 import { InputEmail } from "@/components/ui/InputEmail";
 import { InputPassword } from "@/components/ui/InputPassword";
 import { OtherLoginMethods } from "@/components/ui/OtherLoginMethods";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Login() {
   const [password, setPassword] = useState("");
-
-  const linkStyle = "font-medium text-blue-500";
+  const [email, setEmail] = useState("");
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-100 px-6 py-2">
+    <SafeAreaView className="flex-1 bg-slate-900 px-6 py-4">
       {/* Title */}
-      <Text className="text-center text-4xl font-extrabold uppercase text-rose-700">
-        Rent Tracker
-      </Text>
-
-      {/* Subtitle */}
-      <View className="mb-5 p-2">
-        <Text className="mt-8 text-center text-2xl font-bold text-gray-700">
-          Welcome Back
+      <View className="mb-8 mt-4">
+        <Text className="text-center text-xs font-bold uppercase tracking-[6px] text-rose-500">
+          Rent Tracker
         </Text>
-
-        <Text className="text-center text-gray-500">
-          Manage your property and track rents with ease.
+        <Text className="mt-3 text-center text-3xl font-bold text-slate-100">
+          Welcome back
+        </Text>
+        <Text className="mt-1 text-center text-sm text-slate-500">
+          Sign in to manage your properties
         </Text>
       </View>
 
       {/* Card */}
-      <View className="rounded-3xl bg-white p-5 pt-2 shadow-lg">
-        <View className="mt-6 gap-5">
-          {/* Email */}
-          <InputEmail />
-
-          {/* Password */}
+      <View className="rounded-3xl border border-slate-700 bg-slate-800 p-6">
+        <View className="gap-5">
+          <InputEmail value={email} onChangeText={setEmail} />
           <InputPassword
             label="Password"
             placeholder="Enter your password"
@@ -42,40 +36,34 @@ export default function Login() {
             value={password}
             onChangeText={setPassword}
             secure={true}
-            keyboardType={"default"}
           />
 
-          {/* Forgot Password */}
           <Pressable className="self-end">
-            <Text className={linkStyle}>Forgot Password?</Text>
+            <Text className="text-sm font-medium text-rose-400">
+              Forgot Password?
+            </Text>
           </Pressable>
 
-          {/* Login Button */}
-          <Pressable className="mt-2 rounded-2xl bg-blue-500 p-4 active:opacity-80">
-            <Text className="text-center text-xl font-bold text-white">
+          <Pressable className="mt-1 rounded-2xl bg-rose-600 p-4 active:opacity-80">
+            <Text className="text-center text-base font-bold text-white">
               Log in
             </Text>
           </Pressable>
         </View>
 
-        {/* Divider */}
-        <View className="my-7 flex-row items-center">
-          <View className="h-[1px] flex-1 bg-gray-300" />
-
-          <Text className="mx-4 text-sm text-gray-500">Or Continue With</Text>
-
-          <View className="h-[1px] flex-1 bg-gray-300" />
+        <View className="my-6 flex-row items-center">
+          <View className="h-[1px] flex-1 bg-slate-700" />
+          <Text className="mx-4 text-xs text-slate-500">or continue with</Text>
+          <View className="h-[1px] flex-1 bg-slate-700" />
         </View>
 
         <OtherLoginMethods />
       </View>
 
-      {/* Bottom */}
       <View className="flex-1 flex-row items-center justify-center">
-        <Text>Don&#39;t have an account? </Text>
-
-        <Pressable>
-          <Text className={linkStyle}>Sign up</Text>
+        <Text className="text-slate-500">Don&#39;t have an account? </Text>
+        <Pressable onPress={() => router.replace("/auth/Signup")}>
+          <Text className="font-semibold text-rose-400">Sign up</Text>
         </Pressable>
       </View>
     </SafeAreaView>
