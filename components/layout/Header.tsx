@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Header() {
   const [username, setUsername] = useState("");
-  const [profilePic, setProfilePic] = useState("");
+  const [profilePic, setProfilePic] = useState<string | null>(null);
 
   useEffect(() => {
     const getUsername = async () => {
@@ -35,12 +35,14 @@ export default function Header() {
           className="flex
          flex-row gap-5 p-5 "
         >
-          <Image
-            className="float-start flex justify-start items-center p-2 rounded-full size-7"
-            source={{
-              uri: profilePic,
-            }}
-          />
+          {profilePic ? (
+            <Image
+              className="float-start flex justify-start items-center p-2 rounded-full size-7"
+              source={{
+                uri: profilePic,
+              }}
+            />
+          ) : null}
           <Text className="color-red-400">Hi {username}</Text>
         </View>
       </View>

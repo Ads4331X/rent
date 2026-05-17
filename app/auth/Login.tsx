@@ -43,7 +43,7 @@ export default function Login() {
     setLoading(false);
 
     if (result.error) setError(result.error);
-    else router.replace("/Dashboard");
+    else router.replace("/(tabs)");
   };
 
   return (
