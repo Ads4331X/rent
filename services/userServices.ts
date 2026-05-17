@@ -1,10 +1,7 @@
 import { supabase } from "@/lib/supabase";
-
-// sign with oauth
-import { Platform } from "react-native";
-
-import * as Linking from "expo-linking";
+import { router } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
+import { Platform } from "react-native";
 
 // Types
 type createUserDetails = {
@@ -74,18 +71,41 @@ export const signInWithOAuth = async (
     if (error) return { success: false, error: error.message };
     return { success: true };
   }
-
-  const redirectTo = Linking.createURL("/");
-  console.log(Linking.createURL("/"));
+  const redirectTo = "rent://";
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo, skipBrowserRedirect: true },
   });
 
   if (error) return { success: false, error: error.message };
+  console.log(redirectTo);
 
   if (data?.url) {
-    await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+    console.log("result type:", result.type);
+    console.log("result:", JSON.stringify(result));
+
+    if (result.type === "success" && result.url) {
+      const hash = result.url.split("#")[1];
+      const params = new URLSearchParams(hash);
+      const access_token = params.get("access_token");
+      const refresh_token = params.get("refresh_token");
+
+      console.log("access_token:", access_token);
+      console.log("refresh_token:", refresh_token);
+
+      if (access_token && refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token,
+          refresh_token,
+        });
+        console.log("setSession error:", error);
+        if (!error) {
+          router.replace("/(tabs)");
+        }
+      }
+      console.log("setSession error:", error);
+    }
   }
 
   return { success: true };
