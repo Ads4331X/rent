@@ -1,7 +1,7 @@
 import { InputEmail } from "@/components/ui/InputEmail";
 import { InputPassword } from "@/components/ui/InputPassword";
 import { OtherLoginMethods } from "@/components/ui/OtherLoginMethods";
-import { getUserProfile } from "@/services/userServices";
+import { loginUser } from "@/services/userServices";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -35,7 +35,7 @@ export default function Login() {
       setPasswordError("");
     }
 
-    const result = await getUserProfile({ email, password });
+    const result = await loginUser({ email, password });
 
     console.log(result);
     if (result.error) setError(result.error);

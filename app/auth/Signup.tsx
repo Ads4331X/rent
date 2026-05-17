@@ -20,47 +20,46 @@ export default function Signup() {
   const [error, setError] = useState("");
 
   const handleCreateAccount = async () => {
-    // Username Error Handling
+    let hasError = false;
+
     if (username.trim() === "" || !username) {
       setUsernameError("Username is required");
-    } else if (username.trim().length < 3)
+      hasError = true;
+    } else if (username.trim().length < 3) {
       setUsernameError("Username must be at least 3 characters");
-    else setUsernameError("");
+      hasError = true;
+    } else setUsernameError("");
 
-    // Email Error Handling
     if (!email) {
-      // Email Error Handling
       setEmailError("Email is required");
+      hasError = true;
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       setEmailError("Please enter a valid email address");
-    } else {
-      setEmailError("");
-    }
-    // Password Error Handling
+      hasError = true;
+    } else setEmailError("");
+
     if (!password) {
       setPasswordError("Password is required");
+      hasError = true;
     } else if (password.length < 6) {
       setPasswordError("Password must be at least 6 characters");
-    } else {
-      setPasswordError("");
-    }
-    // Confirm Password Error Handling
+      hasError = true;
+    } else setPasswordError("");
+
     if (!confirmPassword) {
       setConfirmPasswordError("Please confirm your password");
+      hasError = true;
     } else if (confirmPassword !== password) {
       setConfirmPasswordError("Passwords do not match");
-    } else {
-      setConfirmPasswordError("");
-    }
+      hasError = true;
+    } else setConfirmPasswordError("");
+
+    if (hasError) return;
 
     const result = await createUserProfile({ username, email, password });
 
-    if (result.success) {
-      router.replace("/auth/Login");
-    }
-    if (result.error) {
-      setError(result.error);
-    } else setError("");
+    if (result.error) setError(result.error);
+    else router.replace("/auth/Login");
   };
 
   return (

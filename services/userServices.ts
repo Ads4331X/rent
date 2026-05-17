@@ -1,47 +1,66 @@
 import { supabase } from "@/lib/supabase";
 
-// create
-
+// Types
 type createUserDetails = {
   username: string;
   email: string;
   password: string;
 };
 
+type loginUserDetails = {
+  email: string;
+  password: string;
+};
+
+// Create user
 export const createUserProfile = async ({
   username,
   email,
   password,
 }: createUserDetails) => {
-  const { error } = await supabase.from("users").insert({
-    username: username,
-    email: email,
-    password: password,
-    created_at: new Date(),
-  });
+  const { data, error } = await supabase.auth.signUp({ email, password });
+
   if (error) return { success: false, error: error.message };
+
+  const { error: profileError } = await supabase.from("users").insert({
+    id: data.user?.id,
+    username,
+    email,
+  });
+
+  if (profileError) return { success: false, error: profileError.message };
+
   return { success: true };
 };
 
-// get user getUserProfile
-
-type getUserDetails = {
-  email: string;
-  password: string;
-};
-export const getUserProfile = async ({ email, password }: getUserDetails) => {
-  const { data, error } = await supabase
-    .from("users")
-    .select("email , password")
-    .eq("email", email)
-    .eq("password", password);
+// Login user
+export const loginUser = async ({ email, password }: loginUserDetails) => {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) return { success: false, error: error.message };
-  if (!data || data.length === 0) {
-    return { success: false, error: "Invalid credentials" };
-  }
-  return {
-    success: true,
-    data,
-  };
+  return { success: true, data };
+};
+
+// Get user profile
+export const getUserProfile = async (email: string) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .single();
+
+  if (error) return { success: false, error: error.message };
+  return { success: true, data };
+};
+
+// sign with oauth
+export const signInWithOAuth = async (
+  provider: "google" | "github" | "facebook",
+) => {
+  const { data, error } = await supabase.auth.signInWithOAuth({ provider });
+  if (error) return { success: false, error: error.message };
+  return { success: true };
 };
