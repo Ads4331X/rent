@@ -1,7 +1,7 @@
 import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
-import { Image, Text, View } from "react-native";
+import { Image, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Header() {
@@ -30,19 +30,22 @@ export default function Header() {
       className="flex-1 px-6 py-4"
       style={{ backgroundColor: Colors.background }}
     >
+      <Pressable onPress={() => supabase.auth.signOut()}>
+        <Text>Logout</Text>
+      </Pressable>
       <View className="flex-row justify-between items-center ">
         <View
           className="flex
          flex-row gap-5 p-5 "
         >
-          {profilePic ? (
+          {profilePic && (
             <Image
               className="float-start flex justify-start items-center p-2 rounded-full size-7"
               source={{
                 uri: profilePic,
               }}
             />
-          ) : null}
+          )}
           <Text className="color-red-400">Hi {username}</Text>
         </View>
       </View>

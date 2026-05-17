@@ -76,6 +76,7 @@ export const signInWithOAuth = async (
   }
 
   const redirectTo = Linking.createURL("/");
+  console.log(Linking.createURL("/"));
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo, skipBrowserRedirect: true },
