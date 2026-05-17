@@ -1,50 +1,53 @@
-import { InputEmail } from "@/components/ui/InputEmail";
-import { InputPassword } from "@/components/ui/InputPassword";
+import { InputEmail } from "@/components/ui/input/InputEmail";
+import { InputPassword } from "@/components/ui/input/InputPassword";
 import { OtherLoginMethods } from "@/components/ui/OtherLoginMethods";
 import { loginUser } from "@/services/userServices";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import { Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Login() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
-
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    // Email Error Handling
+    if (loading) return;
+    let hasError = false;
+
     if (!email) {
-      // Email Error Handling
       setEmailError("Email is required");
+      hasError = true;
     } else if (!/\S+@\S+\.\S+/.test(email)) {
       setEmailError("Please enter a valid email address");
-    } else {
-      setEmailError("");
-    }
+      hasError = true;
+    } else setEmailError("");
 
-    // Password Error Handling
     if (!password) {
       setPasswordError("Password is required");
+      hasError = true;
     } else if (password.length < 6) {
       setPasswordError("Password must be at least 6 characters");
-    } else {
-      setPasswordError("");
-    }
+      hasError = true;
+    } else setPasswordError("");
 
+    if (hasError) return;
+
+    setLoading(true);
+    setError("");
     const result = await loginUser({ email, password });
+    setLoading(false);
 
-    console.log(result);
     if (result.error) setError(result.error);
     else router.replace("/Dashboard");
   };
 
   return (
     <SafeAreaView className="flex-1 bg-slate-900 px-6 py-4">
-      {/* Title */}
       <View className="mb-8 mt-4">
         <Text className="text-center text-xs font-bold uppercase tracking-[6px] text-rose-500">
           Rent Tracker
@@ -57,7 +60,6 @@ export default function Login() {
         </Text>
       </View>
 
-      {/* Card */}
       <View className="rounded-3xl border border-slate-700 bg-slate-800 p-6">
         <View className="gap-5">
           <InputEmail value={email} onChangeText={setEmail} />
@@ -80,14 +82,21 @@ export default function Login() {
               Forgot Password?
             </Text>
           </Pressable>
+
           {!!error && <Text className="text-red-500">{error}</Text>}
+
           <Pressable
             onPress={handleSubmit}
-            className="mt-1 rounded-2xl bg-rose-600 p-4 active:opacity-80"
+            disabled={loading}
+            className="mt-1 rounded-2xl bg-rose-600 p-4 active:opacity-80 disabled:opacity-50"
           >
-            <Text className="text-center text-base font-bold text-white">
-              Log in
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Text className="text-center text-base font-bold text-white">
+                Log in
+              </Text>
+            )}
           </Pressable>
         </View>
 
@@ -103,7 +112,7 @@ export default function Login() {
       <View className="flex-1 flex-row items-center justify-center">
         <Text className="text-slate-500">Don&#39;t have an account? </Text>
         <Pressable onPress={() => router.replace("/auth/Signup")}>
-          <Text className="font-semibold text-rose-400">Sign up</Text>
+          <Text className="font-semibent text-rose-400">Sign up</Text>
         </Pressable>
       </View>
     </SafeAreaView>

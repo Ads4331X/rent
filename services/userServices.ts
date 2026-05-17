@@ -1,5 +1,11 @@
 import { supabase } from "@/lib/supabase";
 
+// sign with oauth
+import { Platform } from "react-native";
+
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
+
 // Types
 type createUserDetails = {
   username: string;
@@ -56,11 +62,30 @@ export const getUserProfile = async (email: string) => {
   return { success: true, data };
 };
 
-// sign with oauth
+// oauth
 export const signInWithOAuth = async (
   provider: "google" | "github" | "facebook",
 ) => {
-  const { data, error } = await supabase.auth.signInWithOAuth({ provider });
+  if (Platform.OS === "web") {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: "http://localhost:8081" },
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  }
+
+  const redirectTo = Linking.createURL("/");
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider,
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+
   if (error) return { success: false, error: error.message };
+
+  if (data?.url) {
+    await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  }
+
   return { success: true };
 };
