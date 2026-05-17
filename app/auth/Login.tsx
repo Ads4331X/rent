@@ -1,6 +1,7 @@
 import { InputEmail } from "@/components/ui/InputEmail";
 import { InputPassword } from "@/components/ui/InputPassword";
 import { OtherLoginMethods } from "@/components/ui/OtherLoginMethods";
+import { getUserProfile } from "@/services/userServices";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -12,8 +13,9 @@ export default function Login() {
 
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Email Error Handling
     if (!email) {
       // Email Error Handling
@@ -32,6 +34,12 @@ export default function Login() {
     } else {
       setPasswordError("");
     }
+
+    const result = await getUserProfile({ email, password });
+
+    console.log(result);
+    if (result.error) setError(result.error);
+    else router.replace("/Dashboard");
   };
 
   return (
@@ -72,7 +80,7 @@ export default function Login() {
               Forgot Password?
             </Text>
           </Pressable>
-
+          {!!error && <Text className="text-red-500">{error}</Text>}
           <Pressable
             onPress={handleSubmit}
             className="mt-1 rounded-2xl bg-rose-600 p-4 active:opacity-80"
