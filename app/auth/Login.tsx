@@ -10,6 +10,30 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
 
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+
+  const handleSubmit = () => {
+    // Email Error Handling
+    if (!email) {
+      // Email Error Handling
+      setEmailError("Email is required");
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError("Please enter a valid email address");
+    } else {
+      setEmailError("");
+    }
+
+    // Password Error Handling
+    if (!password) {
+      setPasswordError("Password is required");
+    } else if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+    } else {
+      setPasswordError("");
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-slate-900 px-6 py-4">
       {/* Title */}
@@ -29,6 +53,8 @@ export default function Login() {
       <View className="rounded-3xl border border-slate-700 bg-slate-800 p-6">
         <View className="gap-5">
           <InputEmail value={email} onChangeText={setEmail} />
+          {!!emailError && <Text className="text-red-500">{emailError}</Text>}
+
           <InputPassword
             label="Password"
             placeholder="Enter your password"
@@ -37,6 +63,9 @@ export default function Login() {
             onChangeText={setPassword}
             secure={true}
           />
+          {!!passwordError && (
+            <Text className="text-red-500">{passwordError}</Text>
+          )}
 
           <Pressable className="self-end">
             <Text className="text-sm font-medium text-rose-400">
@@ -44,7 +73,10 @@ export default function Login() {
             </Text>
           </Pressable>
 
-          <Pressable className="mt-1 rounded-2xl bg-rose-600 p-4 active:opacity-80">
+          <Pressable
+            onPress={handleSubmit}
+            className="mt-1 rounded-2xl bg-rose-600 p-4 active:opacity-80"
+          >
             <Text className="text-center text-base font-bold text-white">
               Log in
             </Text>
