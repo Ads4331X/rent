@@ -1,45 +1,71 @@
 import { supabase } from "@/lib/supabase";
 import { router, Stack, useSegments } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../global.css";
 
 export default function RootLayout() {
-  const [session, setSession] = useState<any>(null);
-  const [isInitializing, setIsInitializing] = useState(true);
+  const [session, setSession] = useState<any>(undefined); // undefined = not yet known
   const segments = useSegments();
+  const hasNavigated = useRef(false);
 
   useEffect(() => {
+    let mounted = true;
+
+    // onAuthStateChange fires for EVERY auth event including the initial
+    // session load AND after OAuth tokens are exchanged. Relying solely on
+    // this (instead of getSession + this) means we always wait for the
+    // definitive state rather than racing against token exchange.
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setIsInitializing(false);
+    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!mounted) return;
+      setSession(newSession);
     });
 
-    return () => subscription.unsubscribe();
+    // getSession covers the case where the user is already logged in and
+    // onAuthStateChange won't fire at all (no event to trigger it).
+    supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
+      // Only set session from getSession if onAuthStateChange hasn't already
+      // provided a value (undefined means nothing has fired yet).
+      setSession((prev: any) => (prev === undefined ? data.session : prev));
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
-    if (isInitializing) return;
+    // session === undefined means we haven't heard back from Supabase yet
+    if (session === undefined) return;
 
-    // segments[0] will be "auth" if in /auth/Login
-    // segments[0] will be "(tabs)" if in the tab bar area
-    // segments[0] will be undefined if at the root "/"
-    const inAuthGroup = segments[0] === "auth";
-    const inTabsGroup = segments[0] === "(tabs)";
+    // Prevent double-navigating (e.g. getSession + onAuthStateChange both fire)
+    if (hasNavigated.current) return;
 
-    if (!session && !inAuthGroup) {
-      // If not logged in and not in auth screens, force to Login
+    const inAuth = segments[0] === "auth";
+
+    if (!session && !inAuth) {
+      hasNavigated.current = true;
       router.replace("/auth/Login");
-    } else if (session && inAuthGroup) {
-      // If logged in and trying to access auth screens, force to Dashboard
-    } else if (session && (inAuthGroup || !inTabsGroup)) {
-      // If logged in and in auth group or just at root, force to Tabs
-      router.replace("/(tabs)");
+      return;
     }
-  }, [session, isInitializing, segments]);
 
-  if (isInitializing) return null; // Or a splash screen/loading indicator
+    if (session && inAuth) {
+      hasNavigated.current = true;
+      router.replace("/(tabs)");
+      return;
+    }
+  }, [session, segments]);
+
+  // Reset navigation guard whenever session actually changes (login/logout)
+  useEffect(() => {
+    if (session !== undefined) hasNavigated.current = false;
+  }, [session]);
+
+  // Render nothing until we know the auth state — no flash possible
+  if (session === undefined) return null;
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

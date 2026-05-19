@@ -42,8 +42,10 @@ export default function Login() {
     const result = await loginUser({ email, password });
     setLoading(false);
 
+    console.log(result);
+
     if (result.error) setError(result.error);
-    else router.replace("/(tabs)");
+    else router.replace("/");
   };
 
   return (
