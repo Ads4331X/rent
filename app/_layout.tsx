@@ -1,6 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import { router, Stack, useSegments } from "expo-router";
 import { useEffect, useRef, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "../global.css";
 
 export default function RootLayout() {
@@ -67,5 +68,9 @@ export default function RootLayout() {
   // Render nothing until we know the auth state — no flash possible
   if (session === undefined) return null;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </GestureHandlerRootView>
+  );
 }
