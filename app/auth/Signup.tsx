@@ -2,6 +2,7 @@ import { InputEmail } from "@/components/ui/input/InputEmail";
 import { InputPassword } from "@/components/ui/input/InputPassword";
 import { InputUsername } from "@/components/ui/input/InputUsername";
 import { OtherLoginMethods } from "@/components/ui/OtherLoginMethods";
+import { signUpUser } from "@/services/authServices";
 import { createUserProfile } from "@/services/userServices";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -66,11 +67,29 @@ export default function Signup() {
 
     setLoading(true);
     setError("");
-    const result = await createUserProfile({ username, email, password });
+
+    // Step 1: Create the auth user — Supabase generates the userId
+    const authResult = await signUpUser({ email, password });
+
+    if (!authResult.success || !authResult.data?.user?.id) {
+      setError(authResult.error ?? "Signup failed. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    const userId = authResult.data.user.id;
+
+    // Step 2: Create the public profile using the generated userId
+    const profileResult = await createUserProfile({ userId, username, email });
+
     setLoading(false);
 
-    if (result.error) setError(result.error);
-    else router.replace("/auth/Login");
+    if (!profileResult.success) {
+      setError(profileResult.error ?? "Failed to create profile.");
+      return;
+    }
+
+    router.replace("/auth/Login");
   };
 
   return (

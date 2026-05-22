@@ -1,7 +1,7 @@
 import { InputEmail } from "@/components/ui/input/InputEmail";
 import { InputPassword } from "@/components/ui/input/InputPassword";
 import { OtherLoginMethods } from "@/components/ui/OtherLoginMethods";
-import { loginUser } from "@/services/userServices";
+import { loginUser } from "@/services/authServices";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
