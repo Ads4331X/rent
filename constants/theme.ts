@@ -11,6 +11,8 @@ export const Colors = {
   text: "#F1F5F9", // slate-100
   subtext: "#64748B", // slate-500
   icon: "#64748B",
+  pending: "red",
+  noPending: "green",
 };
 
 export const Input = {

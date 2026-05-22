@@ -86,19 +86,15 @@ export const signInWithOAuth = async (
   if (error) return { success: false, error: error.message };
 
   // --- Mobile only ---
-  // Open the OAuth URL in an in-app browser and wait for it to redirect back.
   if (Platform.OS !== "web" && data?.url) {
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
 
-    // The browser returned a redirect URL — extract the tokens from it and
-    // hand them to Supabase so the session is stored locally.
-    if (result.type === "success" && result.url) {
-      // Parse query params and hash fragment manually — Linking.parse()
-      // doesn't expose `params` or `errorCode` in current Expo versions.
-      const url = new URL(result.url);
+    if (result.type === "cancel" || result.type === "dismiss") {
+      return { success: false, error: "OAuth flow was cancelled" };
+    }
 
-      // Supabase can return tokens in EITHER the hash fragment (implicit flow)
-      // OR as query params (PKCE flow). Check both.
+    if (result.type === "success" && result.url) {
+      const url = new URL(result.url);
       const hash = new URLSearchParams(url.hash.replace("#", ""));
       const query = url.searchParams;
 
@@ -110,27 +106,53 @@ export const signInWithOAuth = async (
 
       if (errorCode) return { success: false, error: errorCode };
 
-      if (accessToken && refreshToken) {
-        // Implicit flow — set the session directly from tokens
-        const { error: sessionError } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
+      // Set the session and wait for it to be confirmed before returning.
+      // This ensures _layout.tsx onAuthStateChange has fired and session
+      // state is updated before the caller does anything.
+      await new Promise<void>((resolve, reject) => {
+        // Listen for the SIGNED_IN event that fires after setSession/exchangeCodeForSession
+        const {
+          data: { subscription },
+        } = supabase.auth.onAuthStateChange((event) => {
+          if (event === "SIGNED_IN") {
+            subscription.unsubscribe();
+            resolve();
+          }
         });
-        if (sessionError)
-          return { success: false, error: sessionError.message };
-      } else if (code) {
-        // PKCE flow (GitHub etc.) — exchange the code for a session
-        const { error: exchangeError } =
-          await supabase.auth.exchangeCodeForSession(code);
-        if (exchangeError)
-          return { success: false, error: exchangeError.message };
-      }
-    } else if (result.type === "cancel" || result.type === "dismiss") {
-      return { success: false, error: "OAuth flow was cancelled" };
+
+        // Trigger the session — SIGNED_IN will fire once this completes
+        const settle = async () => {
+          if (accessToken && refreshToken) {
+            const { error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+            });
+            if (error) {
+              subscription.unsubscribe();
+              reject(error);
+            }
+          } else if (code) {
+            const { error } = await supabase.auth.exchangeCodeForSession(code);
+            if (error) {
+              subscription.unsubscribe();
+              reject(error);
+            }
+          } else {
+            subscription.unsubscribe();
+            reject(new Error("No tokens or code found in redirect URL"));
+          }
+        };
+
+        settle();
+
+        // Safety net — don't hang forever
+        setTimeout(() => {
+          subscription.unsubscribe();
+          resolve();
+        }, 5000);
+      });
     }
   }
 
-  // The _layout.tsx onAuthStateChange listener will fire automatically
-  // once the session is set, routing the user to /(tabs).
   return { success: true };
 };

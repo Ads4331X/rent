@@ -1,8 +1,6 @@
-import { Colors } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Image, Pressable, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Header() {
   const [username, setUsername] = useState("");
@@ -10,8 +8,6 @@ export default function Header() {
 
   useEffect(() => {
     const getUsername = async () => {
-      //   console.log(await supabase.auth.getSession());
-
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -26,29 +22,27 @@ export default function Header() {
   }, []);
 
   return (
-    <SafeAreaView
-      className="flex-1 px-6 py-4"
-      style={{ backgroundColor: Colors.background }}
-    >
-      <Pressable onPress={() => supabase.auth.signOut()}>
-        <Text>Logout</Text>
-      </Pressable>
-      <View className="flex-row justify-between items-center ">
-        <View
-          className="flex
+    <View className="flex-row justify-between items-center px-3 border-b-slate-500 border-b-2">
+      <View
+        className="flex justify-center items-center
          flex-row gap-5 p-5 "
-        >
-          {profilePic && (
-            <Image
-              className="float-start flex justify-start items-center p-2 rounded-full size-7"
-              source={{
-                uri: profilePic,
-              }}
-            />
-          )}
-          <Text className="color-red-400">Hi {username}</Text>
-        </View>
+      >
+        {profilePic && (
+          <Image
+            className="float-start flex justify-start items-center p-2 rounded-full size-7"
+            source={{
+              uri: profilePic,
+            }}
+          />
+        )}
+        <Text className="color-red-400">Hi {username}</Text>
       </View>
-    </SafeAreaView>
+      <Pressable
+        className=" bg-red-500 w-fit rounded-lg p-2"
+        onPress={() => supabase.auth.signOut()}
+      >
+        <Text className="text-white ">Logout</Text>
+      </Pressable>
+    </View>
   );
 }
