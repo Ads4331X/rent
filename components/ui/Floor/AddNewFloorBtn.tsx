@@ -1,4 +1,5 @@
 import { Colors } from "@/constants/theme";
+import { createFloor } from "@/services/floorServices";
 import Entypo from "@expo/vector-icons/Entypo";
 import Feather from "@expo/vector-icons/Feather";
 import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
@@ -16,9 +17,9 @@ export default function AddNewFloorBtn() {
   const openSheet = useCallback(() => bottomSheetRef.current?.expand(), []);
   const closeSheet = useCallback(() => bottomSheetRef.current?.close(), []);
 
-  const [floorName, setFloorName] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [floorName, setFloorName] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   const handleAdd = async () => {
     if (!floorName.trim()) {
@@ -28,9 +29,18 @@ export default function AddNewFloorBtn() {
     setError("");
     setLoading(true);
     // TODO: wire up your floor creation service here
-    setLoading(false);
-    setFloorName("");
-    closeSheet();
+    const res = createFloor(floorName);
+    console.log(res);
+
+    if (!(await res).success) {
+      setError((await res).error);
+      setLoading(false);
+      return;
+    } else {
+      setLoading(false);
+      setFloorName("");
+      closeSheet();
+    }
   };
 
   return (
