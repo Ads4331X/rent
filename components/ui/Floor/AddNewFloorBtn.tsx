@@ -11,8 +11,10 @@ import {
   TextInput,
   View,
 } from "react-native";
-
-export default function AddNewFloorBtn() {
+type Props = {
+  onFloorAdded: () => void;
+};
+export default function AddNewFloorBtn({ onFloorAdded }: Props) {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const openSheet = useCallback(() => bottomSheetRef.current?.expand(), []);
   const closeSheet = useCallback(() => bottomSheetRef.current?.close(), []);
@@ -28,19 +30,17 @@ export default function AddNewFloorBtn() {
     }
     setError("");
     setLoading(true);
-    // TODO: wire up your floor creation service here
-    const res = createFloor(floorName);
-    console.log(res);
+    const res = await createFloor(floorName);
+    setLoading(false);
 
-    if (!(await res).success) {
-      setError((await res).error);
-      setLoading(false);
+    if (!res.success) {
+      setError(res.error ?? "Something went wrong");
       return;
-    } else {
-      setLoading(false);
-      setFloorName("");
-      closeSheet();
     }
+
+    setFloorName("");
+    closeSheet();
+    onFloorAdded();
   };
 
   return (
