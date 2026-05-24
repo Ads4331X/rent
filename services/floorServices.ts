@@ -4,34 +4,21 @@ export const createFloor = async (name: string) => {
   const {
     data: { session },
   } = await supabase.auth.getSession();
-  const owner_id = session?.user.id;
-  const { data: existing } = await supabase
+  if (!session) return { success: false, error: "Not logged in" };
+
+  const { error } = await supabase
     .from("floors")
-    .select("name")
-    .eq("name", name)
-    .eq("owner_id", owner_id)
-    .maybeSingle();
+    .insert({ name, owner_id: session.user.id });
 
-  if (existing) {
-    const { error } = await supabase
-      .from("floors")
-      .update({ name })
-      .eq("name", name)
-      .eq("owner_id", owner_id);
-
-    if (error) return { success: false, error: error.message };
-  } else {
-    const { error } = await supabase.from("floors").insert({
-      name,
-      owner_id,
-    });
-
-    if (error) return { success: false, error: error.message };
+  if (error) {
+    // Make the error message user friendly
+    if (error.code === "23505")
+      return { success: false, error: "A floor with this name already exists" };
+    return { success: false, error: error.message };
   }
 
   return { success: true, error: "" };
 };
-
 export const getFloorWithBills = async () => {
   const {
     data: { session },
