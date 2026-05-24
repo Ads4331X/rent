@@ -66,3 +66,12 @@ export const getFloorWithBills = async () => {
 
   return { success: true, data: transformed };
 };
+
+export const deleteFloor = async (id: number) => {
+  const { data, error } = await supabase.from("floors").delete().eq("id", id);
+  if (error) return { success: false, error: error.message, data: [] };
+  return {
+    success: true,
+    data: data,
+  };
+};
