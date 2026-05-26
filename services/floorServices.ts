@@ -62,3 +62,41 @@ export const deleteFloor = async (id: number) => {
     data: data,
   };
 };
+
+export const getFloorDetailWithId = async (floorID: any) => {
+  const currentMonth = new Date().toISOString().slice(0, 7) + "-01"; // "2026-05-01"
+
+  const { data, error } = await supabase
+    .from("floors")
+    .select(
+      `name, bills (month, status, bill_items (name, quantity, rate), payments (amount_paid))`,
+    )
+    .eq("id", floorID)
+    .eq("bills.month", currentMonth) // ← only current month's bill
+    .single();
+
+  if (error) return { success: false, error: error.message, data: null };
+
+  const bill = data.bills[0] ?? null;
+  const totalBilled =
+    bill?.bill_items.reduce(
+      (s: number, i: any) => s + i.quantity * i.rate,
+      0,
+    ) ?? 0;
+  const totalPaid =
+    bill?.payments.reduce((s: number, p: any) => s + p.amount_paid, 0) ?? 0;
+
+  return {
+    success: true,
+    data: {
+      name: data.name,
+      status: bill?.status ?? "no bill",
+      month: bill?.month ?? null,
+      totalBilled,
+      totalPaid,
+      remaining: totalBilled - totalPaid,
+      billItems: bill?.bill_items ?? [],
+      payments: bill?.payments ?? [],
+    },
+  };
+};

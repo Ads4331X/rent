@@ -55,10 +55,9 @@ export default function InfoCard({ refresh }: { refresh: number }) {
 
   const handleAction = async (action: FloorMenuAction, floorId: number) => {
     if (action === "view") router.push(`/floor/${floorId}` as any);
-    if (action === "edit") router.push(`/floor/${floorId}` as any); // same screen, handle edit there
+    if (action === "edit") router.push(`/floor/${floorId}?edit=true` as any); // same screen, handle edit there
     if (action === "delete") {
       const res = await deleteFloor(floorId);
-      console.log(res);
 
       if (res.success)
         setFloors((prev) => prev.filter((f) => f.id !== floorId));
