@@ -11,14 +11,17 @@ export const createFloor = async (name: string) => {
     .insert({ name, owner_id: session.user.id });
 
   if (error) {
-    // Make the error message user friendly
     if (error.code === "23505")
-      return { success: false, error: "A floor with this name already exists" };
+      return {
+        success: false,
+        error: "A floor with this name already exists",
+      };
     return { success: false, error: error.message };
   }
 
   return { success: true, error: "" };
 };
+
 export const getFloorWithBills = async () => {
   const {
     data: { session },
@@ -33,13 +36,16 @@ export const getFloorWithBills = async () => {
 
   if (error) return { success: false, error: error.message, data: [] };
 
-  // Transform so UI never has to deal with nested arrays
   const transformed = data.map((floor) => {
     const bill = floor.bills[0] ?? null;
     const totalBilled =
-      bill?.bill_items.reduce((s: number, i: any) => s + i.amount, 0) ?? 0;
+      bill?.bill_items.reduce((s: number, i: any) => s + Number(i.amount), 0) ??
+      0;
     const totalPaid =
-      bill?.payments.reduce((s: number, p: any) => s + p.amount_paid, 0) ?? 0;
+      bill?.payments.reduce(
+        (s: number, p: any) => s + Number(p.amount_paid),
+        0,
+      ) ?? 0;
 
     return {
       id: floor.id,
@@ -64,31 +70,37 @@ export const deleteFloor = async (id: number) => {
 };
 
 export const getFloorDetailWithId = async (floorID: any) => {
-  const currentMonth = new Date().toISOString().slice(0, 7) + "-01"; // "2026-05-01"
-
   const { data, error } = await supabase
     .from("floors")
     .select(
-      `name, bills (month, status, bill_items (name, quantity, rate), payments (amount_paid))`,
+      `name, bills (id, month, status, bill_items (name, quantity, rate), payments (amount_paid))`,
     )
     .eq("id", floorID)
-    .eq("bills.month", currentMonth) // ← only current month's bill
     .single();
 
   if (error) return { success: false, error: error.message, data: null };
 
-  const bill = data.bills[0] ?? null;
+  const bill = data.bills?.length
+    ? [...data.bills].sort((a: any, b: any) =>
+        b.month.localeCompare(a.month),
+      )[0]
+    : null;
+
   const totalBilled =
     bill?.bill_items.reduce(
-      (s: number, i: any) => s + i.quantity * i.rate,
+      (s: number, i: any) => s + Number(i.quantity) * Number(i.rate),
       0,
     ) ?? 0;
   const totalPaid =
-    bill?.payments.reduce((s: number, p: any) => s + p.amount_paid, 0) ?? 0;
+    bill?.payments.reduce(
+      (s: number, p: any) => s + Number(p.amount_paid),
+      0,
+    ) ?? 0;
 
   return {
     success: true,
     data: {
+      id: bill?.id ?? null,
       name: data.name,
       status: bill?.status ?? "no bill",
       month: bill?.month ?? null,
@@ -99,4 +111,110 @@ export const getFloorDetailWithId = async (floorID: any) => {
       payments: bill?.payments ?? [],
     },
   };
+};
+
+export const updateFloorDetails = async (
+  floorId: any,
+  form: Record<string, string | number>,
+  billId: number | null,
+) => {
+  // 1. Update floor name
+  const { error: nameError } = await supabase
+    .from("floors")
+    .update({ name: form.floorName })
+    .eq("id", floorId);
+
+  if (nameError) return { success: false, error: nameError.message };
+
+  // 2. Upsert floor_defaults (the standard values)
+  const { error: defaultsError } = await supabase
+    .from("floor_defaults")
+    .upsert({
+      floor_id: floorId,
+      rent: Number(form.rent),
+      water: Number(form.water),
+      garbage: Number(form.garbage),
+      electricity_rate: Number(form.electricityRate),
+      updated_at: new Date().toISOString(),
+    });
+
+  if (defaultsError) return { success: false, error: defaultsError.message };
+
+  // 3. If a current bill exists, ensure the standard bill_items rows exist
+  //    (and update them) using upsert.
+  if (billId) {
+    const items = [
+      {
+        bill_id: billId,
+        name: "Rent",
+        quantity: 1,
+        rate: Number(form.rent),
+      },
+      {
+        bill_id: billId,
+        name: "Water",
+        quantity: 1,
+        rate: Number(form.water),
+      },
+      {
+        bill_id: billId,
+        name: "Garbage",
+        quantity: 1,
+        rate: Number(form.garbage),
+      },
+      {
+        bill_id: billId,
+        name: "Electricity Units",
+        quantity: Number(form.electricityUnit),
+        rate: Number(form.electricityRate),
+      },
+    ];
+
+    // No unique constraint on (bill_id, name) => use delete+insert to ensure
+    // the standard items always exist for the bill.
+    const { error: deleteError } = await supabase
+      .from("bill_items")
+      .delete()
+      .eq("bill_id", billId);
+
+    if (deleteError) return { success: false, error: deleteError.message };
+
+    const { error: insertError } = await supabase
+      .from("bill_items")
+      .insert(items);
+
+    if (insertError) return { success: false, error: insertError.message };
+  }
+
+  return { success: true };
+};
+
+export const addPayment = async (
+  billId: number,
+  amount: number,
+  totalBilled: number,
+  currentTotalPaid: number,
+) => {
+  if (!billId) return { success: false, error: "No bill found" };
+  if (!amount || amount <= 0)
+    return { success: false, error: "Enter a valid amount" };
+
+  const { error: insertError } = await supabase
+    .from("payments")
+    .insert({ bill_id: billId, amount_paid: amount });
+
+  if (insertError) return { success: false, error: insertError.message };
+
+  // If this payment covers the remaining balance, mark bill as paid
+  const newTotalPaid = currentTotalPaid + amount;
+  if (newTotalPaid >= totalBilled) {
+    const { error: updateError } = await supabase
+      .from("bills")
+      .update({ status: "paid" })
+      .eq("id", billId);
+
+    if (updateError) return { success: false, error: updateError.message };
+  }
+
+  return { success: true };
 };

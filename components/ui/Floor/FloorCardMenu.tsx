@@ -16,6 +16,12 @@ const OPTIONS: {
     icon: "trash-2",
     color: "#f43f5e",
   },
+  {
+    label: "Setting",
+    action: "view",
+    icon: "settings",
+    color: "#94a3b8",
+  },
 ];
 
 interface Props {

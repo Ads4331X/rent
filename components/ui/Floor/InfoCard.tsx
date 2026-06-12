@@ -10,28 +10,27 @@ import { Floor, FloorMenuAction } from "./utils/types";
 export default function InfoCard({ refresh }: { refresh: number }) {
   const [floors, setFloors] = useState<Floor[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchFloors();
 
-    // Subscribe to realtime changes on floors table
+    const existing = supabase
+      .getChannels()
+      .find((c) => c.topic === "realtime:floors-changes");
+    if (existing) supabase.removeChannel(existing);
+
     const channel = supabase
       .channel("floors-changes")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "floors" },
         (payload) => {
-          if (payload.eventType === "INSERT") {
-            fetchFloors(); // refetch to get transformed data
-          }
+          if (payload.eventType === "INSERT") fetchFloors();
           if (payload.eventType === "DELETE") {
             setFloors((prev) =>
               prev.filter((f) => f.id !== (payload.old as any).id),
             );
           }
-          if (payload.eventType === "UPDATE") {
-            fetchFloors();
-          }
+          if (payload.eventType === "UPDATE") fetchFloors();
         },
       )
       .subscribe();
@@ -54,7 +53,15 @@ export default function InfoCard({ refresh }: { refresh: number }) {
   };
 
   const handleAction = async (action: FloorMenuAction, floorId: number) => {
-    if (action === "view") router.push(`/floor/${floorId}` as any);
+    // FloorCardMenu currently maps both “View Details” and “Setting” to action="view".
+    // Requirement: only the “Setting” item should navigate to /setting/floor/[id].
+    // In FloorCard, we pass the correct action based on the menu item.
+
+    if (action === "view") {
+      // navigate to Setting
+      router.push(`/setting/floor/${floorId}` as any);
+    }
+
     if (action === "edit") router.push(`/floor/${floorId}?edit=true` as any); // same screen, handle edit there
     if (action === "delete") {
       const res = await deleteFloor(floorId);
