@@ -1,22 +1,50 @@
 import { supabase } from "@/lib/supabase";
 
-export const createFloor = async (name: string) => {
+type FloorDefaults = {
+  rent: number;
+  water: number;
+  garbage: number;
+  electricityRate: number;
+};
+
+export const createFloor = async (name: string, defaults: FloorDefaults) => {
   const {
     data: { session },
   } = await supabase.auth.getSession();
   if (!session) return { success: false, error: "Not logged in" };
 
-  const { error } = await supabase
+  // 1. Create the floor, and get its id back so we can attach defaults to it.
+  const { data: floor, error: floorError } = await supabase
     .from("floors")
-    .insert({ name, owner_id: session.user.id });
+    .insert({ name, owner_id: session.user.id })
+    .select("id")
+    .single();
 
-  if (error) {
-    if (error.code === "23505")
+  if (floorError) {
+    if (floorError.code === "23505")
       return {
         success: false,
         error: "A floor with this name already exists",
       };
-    return { success: false, error: error.message };
+    return { success: false, error: floorError.message };
+  }
+
+  // 2. Attach the default values the user set in the "Add Floor" form.
+  const { error: defaultsError } = await supabase
+    .from("floor_defaults")
+    .insert({
+      floor_id: floor.id,
+      rent: defaults.rent,
+      water: defaults.water,
+      garbage: defaults.garbage,
+      electricity_rate: defaults.electricityRate,
+    });
+
+  if (defaultsError) {
+    // Floor was created but defaults failed to save — clean up so we don't
+    // leave a floor with no defaults row behind.
+    await supabase.from("floors").delete().eq("id", floor.id);
+    return { success: false, error: defaultsError.message };
   }
 
   return { success: true, error: "" };

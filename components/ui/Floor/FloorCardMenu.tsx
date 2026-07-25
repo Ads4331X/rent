@@ -18,7 +18,7 @@ const OPTIONS: {
   },
   {
     label: "Setting",
-    action: "view",
+    action: "setting",
     icon: "settings",
     color: "#94a3b8",
   },

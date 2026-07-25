@@ -7,4 +7,4 @@ export type Floor = {
   remaining: number;
 };
 
-export type FloorMenuAction = "view" | "edit" | "delete";
+export type FloorMenuAction = "view" | "edit" | "delete" | "setting";

@@ -53,16 +53,17 @@ export default function InfoCard({ refresh }: { refresh: number }) {
   };
 
   const handleAction = async (action: FloorMenuAction, floorId: number) => {
-    // FloorCardMenu currently maps both “View Details” and “Setting” to action="view".
-    // Requirement: only the “Setting” item should navigate to /setting/floor/[id].
-    // In FloorCard, we pass the correct action based on the menu item.
-
     if (action === "view") {
-      // navigate to Setting
+      // View Details → navigate to floor details page
+      router.push(`/floor/${floorId}` as any);
+    }
+
+    if (action === "setting") {
+      // Setting → navigate to floor settings page
       router.push(`/setting/floor/${floorId}` as any);
     }
 
-    if (action === "edit") router.push(`/floor/${floorId}?edit=true` as any); // same screen, handle edit there
+    if (action === "edit") router.push(`/floor/${floorId}?edit=true` as any);
     if (action === "delete") {
       const res = await deleteFloor(floorId);
 
